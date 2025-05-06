@@ -2,67 +2,20 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Live Gesichtsanalyse</title>
-  <script defer src="https://unpkg.com/face-api.js"></script>
-  <style>
-    body { margin: 0; background: #111; color: white; font-family: sans-serif; text-align: center; }
-    canvas { position: absolute; top: 0; left: 0; }
-    #videoElement { border-radius: 10px; display: none; }
-    #startBtn { padding: 1em 2em; font-size: 1.2em; margin-top: 2em; cursor: pointer; }
-  </style>
+  <title>Kamera Test</title>
 </head>
 <body>
-  <h1>Live Gesichtsanalyse</h1>
-  <button id="startBtn">Kamera starten</button>
-  <video id="videoElement" width="720" height="560" autoplay muted></video>
-
+  <h1>Live Kamera Test</h1>
+  <video id="videoElement" width="720" height="560" autoplay></video>
   <script>
     const video = document.getElementById('videoElement');
-    const button = document.getElementById('startBtn');
-
-    button.addEventListener('click', async () => {
-      button.style.display = 'none';
-      video.style.display = 'block';
-
-      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
-        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-      ]);
-
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-
-      video.addEventListener('playing', () => {
-        const canvas = faceapi.createCanvasFromMedia(video);
-        document.body.append(canvas);
-        const displaySize = { width: video.width, height: video.height };
-        faceapi.matchDimensions(canvas, displaySize);
-
-        setInterval(async () => {
-          const detections = await faceapi
-            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-            .withAgeAndGender()
-            .withFaceExpressions();
-
-          const resized = faceapi.resizeResults(detections, displaySize);
-          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-          faceapi.draw.drawDetections(canvas, resized);
-
-          resized.forEach(detection => {
-            const { age, gender, genderProbability, expressions } = detection;
-            const maxExp = Object.entries(expressions).sort((a, b) => b[1] - a[1])[0][0];
-            const box = detection.detection.box;
-            const drawBox = new faceapi.draw.DrawBox(box, {
-              label: `${gender} (${Math.round(genderProbability * 100)}%) | ${Math.round(age)} Jahre | ${maxExp}`
-            });
-            drawBox.draw(canvas);
-          });
-        }, 500);
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.log('Fehler beim Kamera-Zugriff: ', err);
       });
-    });
   </script>
 </body>
 </html>
